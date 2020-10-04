@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "chinese-mnist-with-pytorch-lightning-resnet"
+version = "0.1.0"
+description = "Chinese MNIST with pytorch lightning and resnet"
+authors = ["Jiayu Liu <jiayu@hey.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+torch = "^1.6.0"
+torchvision = "^0.7.0"
+albumentations = "^0.4.6"
+
+[tool.poetry.dev-dependencies]
+black = "^20.8b1"
+isort = "^5.5.4"
+mypy = "^0.782"
+pytest = "^6.1.1"
+kaggle = "^1.5.8"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
