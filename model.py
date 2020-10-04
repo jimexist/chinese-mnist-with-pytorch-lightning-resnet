@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.metrics import Accuracy
 from sklearn.model_selection import StratifiedKFold
 from torch import nn, optim
@@ -41,7 +42,8 @@ class ChineseMNISTResnetModel(pl.LightningModule):
         image, y = batch
         yhat = self(image)
         loss = self.criterion(yhat, y)
-        return {"loss": loss}
+        acc = self.accuracy(yhat, y)
+        return {"loss": loss, "acc": acc}
 
     def validation_step(self, batch, batch_idx: int):
         image, y = batch
@@ -64,9 +66,22 @@ def training(k_folds: int = 5):
     data_root = Path("/kaggle/input/chinese-mnist" if is_kaggle else "archive")
     all_df = pd.read_csv(data_root / "chinese_mnist.csv")
 
-    skf = StratifiedKFold(n_splits=k_folds)
+    skf = StratifiedKFold(n_splits=k_folds, shuffle=True)
 
-    trainer = pl.Trainer(gpus=1, max_epochs=5, precision=16)
+    checkpoint_callback = ModelCheckpoint(
+        filepath=os.getcwd(),
+        save_top_k=1,
+        verbose=True,
+        monitor="val_loss",
+        mode="min",
+    )
+    trainer = pl.Trainer(
+        gpus=1,
+        max_epochs=4,
+        precision=16,
+        val_check_interval=0.2,
+        checkpoint_callback=checkpoint_callback,
+    )
 
     for train_indices, val_indices in skf.split(all_df, all_df.code):
         data_module = ChineseMNISTDataModule(

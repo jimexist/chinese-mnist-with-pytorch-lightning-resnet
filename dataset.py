@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 import torch
+from albumentations.augmentations.transforms import Blur, RandomBrightness
 from albumentations.pytorch import ToTensorV2
-from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 
@@ -27,7 +27,6 @@ class ChineseMNISTDataset(Dataset):
     def __getitem__(self, idx: int):
         row = self.df.loc[idx, :]
         suite_id, code, sample_id = row.suite_id, row.code, row.sample_id
-        assert 1 <= code <= 15, f"invalid code {code}"
         filename = self.image_root / f"input_{suite_id}_{sample_id}_{code}.jpg"
         assert os.path.isfile(filename), f"{filename} is not a file"
         image = cv2.imread(str(filename))
@@ -56,6 +55,8 @@ class ChineseMNISTDataModule(pl.LightningDataModule):
         self.train_df = self.df.loc[train_indices, :].copy().reset_index()
         self.train_transform = A.Compose(
             [
+                Blur(),
+                RandomBrightness(),
                 ToTensorV2(),
             ]
         )
@@ -70,7 +71,7 @@ class ChineseMNISTDataModule(pl.LightningDataModule):
         ds = ChineseMNISTDataset(self.train_df, self.image_root, self.train_transform)
         return DataLoader(
             ds,
-            batch_size=32,
+            batch_size=64,
             shuffle=True,
             num_workers=4,
             pin_memory=True,
@@ -80,7 +81,7 @@ class ChineseMNISTDataModule(pl.LightningDataModule):
         ds = ChineseMNISTDataset(self.val_df, self.image_root, self.val_transform)
         return DataLoader(
             ds,
-            batch_size=32,
+            batch_size=64,
             shuffle=False,
             num_workers=4,
             pin_memory=True,
